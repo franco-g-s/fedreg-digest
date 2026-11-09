@@ -8,7 +8,7 @@ version = "2.0.0"
 description = "Watch the Federal Register and the eCFR for the regulations you care about, and get a plain-language digest of what changed."
 readme = "README.md"
 requires-python = ">=3.10"
-license = "MIT"
+license = "AGPL-3.0-only"
 authors = [{ name = "Franco Gómez Schumacher" }]
 keywords = ["federal-register", "ecfr", "cfr", "regulatory", "compliance", "fda", "monitoring"]
 classifiers = [

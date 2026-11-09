@@ -120,4 +120,12 @@ ruff check src tests
 fedreg-digest helps you notice regulatory changes. It does not interpret them. AI summaries can be
 wrong, so read the linked source before acting, and do not treat a digest as legal advice.
 
-MIT licensed. Built by [Franco Gómez Schumacher](https://franco.international).
+## License
+
+[AGPL-3.0](LICENSE) © 2025-2026 Franco Gómez Schumacher. You may use, study, change and
+share it. If you distribute a modified version, or run one as a network service,
+you must publish your changes under the same license.
+
+Want to use it in a closed-source or commercial product without those
+obligations? A separate commercial license is available: get in touch through
+[franco.international](https://franco.international).
