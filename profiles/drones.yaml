@@ -1,0 +1,35 @@
+# Example: a drone operator tracking FAA rules for small unmanned aircraft.
+
+name: Drone operations watch
+
+topic: >
+  A commercial drone services company flying small unmanned aircraft under
+  Part 107: inspections and aerial photography, sometimes beyond visual line
+  of sight and at night. We care about operating rules, waivers, Remote ID,
+  airspace restrictions that affect drones, and pilot certification. Rules
+  for crewed aircraft only are not relevant.
+
+keywords:
+  - unmanned aircraft
+  - UAS
+  - drone
+  - remote ID
+  - beyond visual line of sight
+  - BVLOS
+  - remote pilot
+  - Part 107
+
+federal_register:
+  agencies: [federal-aviation-administration]
+  # Airspace notices are numerous; leave NOTICE out to keep the digest tight.
+  document_types: [RULE, PRORULE]
+
+ecfr:
+  title: 14
+  parts: ["107", "89"]   # Small UAS operations; Remote ID
+
+ai:
+  enabled: true
+
+digest:
+  lookback_days: 7

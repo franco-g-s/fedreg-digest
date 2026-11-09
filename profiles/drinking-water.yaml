@@ -1,0 +1,33 @@
+# Example: a water utility tracking EPA drinking-water standards.
+
+name: Drinking water standards watch
+
+topic: >
+  A mid-sized public water system. We follow EPA national primary drinking
+  water regulations: maximum contaminant levels (including PFAS and lead and
+  copper), monitoring and reporting requirements, compliance deadlines, and
+  consumer confidence reports. Air, waste and pesticide rules are out of scope
+  unless they change drinking-water obligations.
+
+keywords:
+  - drinking water
+  - public water system
+  - maximum contaminant level
+  - PFAS
+  - lead and copper
+  - Safe Drinking Water Act
+  - consumer confidence report
+
+federal_register:
+  agencies: [environmental-protection-agency]
+  document_types: [RULE, PRORULE, NOTICE]
+
+ecfr:
+  title: 40
+  parts: ["141", "142"]   # National primary drinking water regulations; implementation
+
+ai:
+  enabled: true
+
+digest:
+  lookback_days: 7

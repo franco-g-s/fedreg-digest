@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ subject }}</title>
+<style>
+  body { margin: 0; padding: 0; background: #f4f5f7; color: #1d2433; font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 40px; }
+  .card { background: #fff; border: 1px solid #e4e7ec; border-radius: 10px; padding: 20px 22px; margin: 0 0 14px; }
+  h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: #667085; margin: 28px 0 10px; }
+  h3 { font-size: 16px; margin: 6px 0 6px; line-height: 1.35; }
+  h3 a { color: #1d2433; text-decoration: none; }
+  h3 a:hover { text-decoration: underline; }
+  p { margin: 0 0 10px; }
+  a { color: #175cd3; }
+  .muted { color: #667085; font-size: 13px; }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .stat { background: #f9fafb; border: 1px solid #eaecf0; border-radius: 8px; padding: 8px 12px; min-width: 92px; }
+  .stat b { display: block; font-size: 20px; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; border-radius: 999px; padding: 2px 9px; margin-right: 6px; }
+  .meta { color: #667085; font-size: 13px; margin-bottom: 10px; }
+  .points { margin: 8px 0 12px; padding-left: 20px; }
+  .points li { margin-bottom: 4px; }
+  .why { font-size: 13px; color: #475467; background: #f9fafb; border-radius: 6px; padding: 7px 10px; margin-top: 10px; }
+  .deadline { font-size: 13px; background: #fffaeb; border-left: 3px solid #f79009; padding: 6px 10px; margin: 8px 0; }
+  .alert { background: #fef3f2; border: 1px solid #fecdca; color: #912018; border-radius: 10px; padding: 14px 18px; margin: 0 0 14px; }
+  .alert ul { margin: 6px 0 0; padding-left: 18px; }
+  table.dates { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.dates td { padding: 6px 0; border-bottom: 1px solid #f2f4f7; vertical-align: top; }
+  table.dates td.when { white-space: nowrap; width: 110px; font-weight: 600; }
+  .minimal li { margin-bottom: 6px; }
+  pre.diff { background: #0f1729; color: #d0d5dd; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; border-radius: 8px; padding: 12px 14px; overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
+  pre.diff .add { color: #75e0a7; }
+  pre.diff .del { color: #fda29b; }
+  pre.diff .ctx { color: #98a2b3; }
+  .empty { text-align: center; color: #667085; padding: 26px; }
+  footer { color: #98a2b3; font-size: 12px; text-align: center; margin-top: 26px; }
+  footer a { color: #98a2b3; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="card">
+    <div class="muted">Regulatory digest</div>
+    <h1>{{ d.profile.name }}</h1>
+    <div class="muted">{{ d.start | human_date }} &ndash; {{ d.end | human_date }}</div>
+    <div class="stats">
+      <div class="stat"><b>{{ d.by_level('HIGH') | length }}</b><span class="muted">high</span></div>
+      <div class="stat"><b>{{ d.by_level('MEDIUM') | length }}</b><span class="muted">medium</span></div>
+      <div class="stat"><b>{{ (d.by_level('LOW') | length) + (d.by_level('MINIMAL') | length) }}</b><span class="muted">low / minimal</span></div>
+      {% if d.profile.watches_cfr %}
+      <div class="stat"><b>{{ d.changes | length }}</b><span class="muted">CFR changes</span></div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if d.problems %}
+  <div class="alert">
+    <strong>This digest may be incomplete.</strong>
+    <ul>{% for p in d.problems %}<li>{{ p }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+
+  {% if d.deadlines %}
+  <h2>Upcoming dates</h2>
+  <div class="card">
+    <table class="dates">
+      {% for when, what, doc in d.deadlines %}
+      <tr><td class="when">{{ when | human_date }}</td><td>{{ what }} &middot; <a href="{{ doc.html_url }}">{{ doc.title }}</a></td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
+
+  {% set main = d.documents | selectattr('assessment.level', 'in', ['HIGH', 'MEDIUM', 'LOW']) | list %}
+  {% if main %}
+  <h2>Federal Register</h2>
+  {% for item in main %}
+  {% set doc = item.document %}{% set a = item.assessment %}{% set s = LEVEL_STYLE[a.level] %}
+  <div class="card">
+    <span class="badge" style="color: {{ s[1] }}; background: {{ s[2] }};">{{ s[0] }}</span>
+    <span class="badge" style="color: #344054; background: #f2f4f7;">{{ doc.type_label }}</span>
+    <h3><a href="{{ doc.html_url }}">{{ doc.title }}</a></h3>
+    <div class="meta">
+      {{ doc.agencies | join(', ') }} &middot; {{ doc.publication_date | human_date }}{% if doc.citation %} &middot; {{ doc.citation }}{% endif %}
+      {% if doc.pdf_url %} &middot; <a href="{{ doc.pdf_url }}">PDF</a>{% endif %}
+    </div>
+    {% if item.summary %}
+      {% if item.summary.key_points %}
+      <ul class="points">{% for point in item.summary.key_points %}<li>{{ point }}</li>{% endfor %}</ul>
+      {% endif %}
+      {{ item.summary.summary | paragraphs }}
+      {% for dl in item.summary.deadlines %}<div class="deadline">{{ dl }}</div>{% endfor %}
+    {% elif doc.abstract %}
+      <p>{{ doc.abstract }}</p>
+    {% endif %}
+    <div class="why">
+      Why it's here: {{ a.reasons | join('; ') }}.
+      {% if a.ai_verdict %}<br>Claude: {{ a.ai_verdict }}{% endif %}
+      {% if a.ai_failed %}<br>The AI review for this document failed, so it is shown unreviewed.{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {% set minimal = d.by_level('MINIMAL') %}
+  {% if minimal %}
+  <h2>Also mentioned</h2>
+  <div class="card">
+    <ul class="minimal">
+    {% for item in minimal %}
+      <li><a href="{{ item.document.html_url }}">{{ item.document.title }}</a>
+        <span class="muted">&middot; {{ item.document.type_label }} &middot; {{ item.assessment.reasons | join('; ') }}</span></li>
+    {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if d.profile.watches_cfr %}
+  <h2>Code of Federal Regulations &middot; {{ d.profile.ecfr.title }} CFR {{ d.profile.ecfr.parts | join(', ') }}</h2>
+  {% if d.changes %}
+    {% for item in d.changes %}
+    {% set c = item.change %}{% set s = CHANGE_STYLE[c.change_type] %}
+    <div class="card">
+      <span class="badge" style="color: {{ s[1] }}; background: {{ s[2] }};">{{ s[0] }}</span>
+      {% if item.analysis %}<span class="badge" style="color: #344054; background: #f2f4f7;">Relevance {{ item.analysis.relevance }}/100</span>{% endif %}
+      <h3><a href="{{ c.url }}">{{ c.citation }}</a></h3>
+      <div class="meta">{{ c.heading }} &middot; in effect from {{ c.amendment_date | human_date }}
+        &middot; +{{ c.lines_added }} / &minus;{{ c.lines_removed }} lines
+        {% if c.compare_url %} &middot; <a href="{{ c.compare_url }}">side-by-side on eCFR</a>{% endif %}</div>
+      {% if item.analysis %}
+        <p><strong>{{ item.analysis.summary }}</strong></p>
+        {{ item.analysis.impact | paragraphs }}
+      {% endif %}
+      {% if c.diff %}
+      <pre class="diff">{% for line in c.diff[:DIFF_LINES] %}<span class="{{ 'add' if line.startswith('+') else 'del' if line.startswith('-') else 'ctx' }}">{{ line }}</span>
+{% endfor %}{% if c.diff | length > DIFF_LINES %}<span class="ctx">... {{ c.diff | length - DIFF_LINES }} more lines on eCFR</span>{% endif %}</pre>
+      {% endif %}
+      {% if c.related_documents %}
+      <div class="why">Published as:
+        {% for r in c.related_documents %}<a href="{{ r.html_url }}">{{ r.title }}</a> ({{ r.citation or r.document_number }}, {{ r.publication_date | human_date }}){% if not loop.last %}; {% endif %}{% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  {% elif d.cfr_checked %}
+    <div class="card empty">No amendments to these parts took effect in this period{% if d.cfr_current_as_of and d.cfr_current_as_of < d.end %} (eCFR is current as of {{ d.cfr_current_as_of | human_date }}){% endif %}.</div>
+  {% endif %}
+  {% endif %}
+
+  {% if not d.documents and not d.changes and not d.problems %}
+  <div class="card empty">Nothing relevant was published in this period. {{ d.fetched }} document{{ '' if d.fetched == 1 else 's' }} checked.</div>
+  {% endif %}
+
+  <footer>
+    {{ d.fetched }} Federal Register document{{ '' if d.fetched == 1 else 's' }} checked, {{ d.rejected }} not relevant.
+    {% if d.ai_used %}Summaries and reviews by Claude ({{ d.profile.ai.model }}); check the source before relying on them.{% else %}AI was off for this run.{% endif %}<br>
+    Generated {{ d.generated_at.strftime('%Y-%m-%d %H:%M UTC') }} by <a href="https://github.com/franco-g-s/fedreg-digest">fedreg-digest</a>
+    from the <a href="https://www.federalregister.gov/developers/documentation/api/v1">Federal Register</a>
+    and <a href="https://www.ecfr.gov/developers/documentation/api/v1">eCFR</a> APIs.
+  </footer>
+</div>
+</body>
+</html>

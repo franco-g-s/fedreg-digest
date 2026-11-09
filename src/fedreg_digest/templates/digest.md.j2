@@ -1,0 +1,97 @@
+# {{ d.profile.name }}
+
+Regulatory digest for {{ d.start | human_date }} – {{ d.end | human_date }}.
+{{ d.by_level('HIGH') | length }} high, {{ d.by_level('MEDIUM') | length }} medium, {{ (d.by_level('LOW') | length) + (d.by_level('MINIMAL') | length) }} low/minimal{% if d.profile.watches_cfr %}, {{ d.changes | length }} CFR change{{ '' if d.changes | length == 1 else 's' }}{% endif %}.
+
+{% if d.problems %}
+> **This digest may be incomplete.**
+{% for p in d.problems %}
+> - {{ p }}
+{% endfor %}
+
+{% endif %}
+{% if d.deadlines %}
+## Upcoming dates
+
+{% for when, what, doc in d.deadlines %}
+- **{{ when | human_date }}** · {{ what }} · [{{ doc.title }}]({{ doc.html_url }})
+{% endfor %}
+
+{% endif %}
+{% set main = d.documents | selectattr('assessment.level', 'in', ['HIGH', 'MEDIUM', 'LOW']) | list %}
+{% if main %}
+## Federal Register
+
+{% for item in main %}
+{% set doc = item.document %}{% set a = item.assessment %}
+### [{{ doc.title }}]({{ doc.html_url }})
+
+`{{ a.level }}` · {{ doc.type_label }} · {{ doc.agencies | join(', ') }} · {{ doc.publication_date | human_date }}{% if doc.citation %} · {{ doc.citation }}{% endif %}
+
+
+{% if item.summary %}
+{% for point in item.summary.key_points %}
+- {{ point }}
+{% endfor %}
+
+{{ item.summary.summary }}
+
+{% for dl in item.summary.deadlines %}
+> {{ dl }}
+{% endfor %}
+{% elif doc.abstract %}
+{{ doc.abstract }}
+{% endif %}
+
+*Why it's here: {{ a.reasons | join('; ') }}.{% if a.ai_verdict %} Claude: {{ a.ai_verdict }}{% endif %}{% if a.ai_failed %} (AI review failed; shown unreviewed.){% endif %}*
+
+{% endfor %}
+{% endif %}
+{% set minimal = d.by_level('MINIMAL') %}
+{% if minimal %}
+## Also mentioned
+
+{% for item in minimal %}
+- [{{ item.document.title }}]({{ item.document.html_url }}) · {{ item.document.type_label }} · {{ item.assessment.reasons | join('; ') }}
+{% endfor %}
+
+{% endif %}
+{% if d.profile.watches_cfr %}
+## Code of Federal Regulations · {{ d.profile.ecfr.title }} CFR {{ d.profile.ecfr.parts | join(', ') }}
+
+{% if d.changes %}
+{% for item in d.changes %}
+{% set c = item.change %}
+### [{{ c.citation }}]({{ c.url }}) · {{ CHANGE_STYLE[c.change_type][0] }}
+
+{{ c.heading }} · in effect from {{ c.amendment_date | human_date }} · +{{ c.lines_added }}/−{{ c.lines_removed }} lines{% if c.compare_url %} · [side-by-side]({{ c.compare_url }}){% endif %}
+
+
+{% if item.analysis %}
+**{{ item.analysis.summary }}** (relevance {{ item.analysis.relevance }}/100)
+
+{{ item.analysis.impact }}
+
+{% endif %}
+{% if c.diff %}
+```diff
+{% for line in c.diff[:DIFF_LINES] %}
+{{ line }}
+{% endfor %}
+```
+{% endif %}
+{% if c.related_documents %}
+Published as: {% for r in c.related_documents %}[{{ r.title }}]({{ r.html_url }}){% if not loop.last %}; {% endif %}{% endfor %}
+
+
+{% endif %}
+
+
+{% endfor %}
+{% elif d.cfr_checked %}
+No amendments to these parts took effect in this period.
+
+{% endif %}
+{% endif %}
+---
+{{ d.fetched }} documents checked, {{ d.rejected }} not relevant. Generated {{ d.generated_at.strftime('%Y-%m-%d %H:%M UTC') }} by [fedreg-digest](https://github.com/franco-g-s/fedreg-digest).

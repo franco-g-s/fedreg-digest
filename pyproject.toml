@@ -1,0 +1,52 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fedreg-digest"
+version = "2.0.0"
+description = "Watch the Federal Register and the eCFR for the regulations you care about, and get a plain-language digest of what changed."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "Franco Gómez Schumacher" }]
+keywords = ["federal-register", "ecfr", "cfr", "regulatory", "compliance", "fda", "monitoring"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Topic :: Office/Business",
+]
+dependencies = [
+    "anthropic>=2.6,<3",
+    "click>=8.1",
+    "defusedxml>=0.7",
+    "jinja2>=3.1",
+    "python-dotenv>=1.0",
+    "pyyaml>=6.0",
+    "requests>=2.31",
+    "rich>=13.7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+fedreg-digest = "fedreg_digest.cli:main"
+fedreg = "fedreg_digest.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/franco-g-s/fedreg-digest"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fedreg_digest"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

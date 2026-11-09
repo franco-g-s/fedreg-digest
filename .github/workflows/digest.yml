@@ -1,0 +1,65 @@
+# Scheduled digest. Off until you opt in, so forks and fresh clones never send
+# anything by surprise. To turn it on:
+#
+#   1. Commit a profile (e.g. copy profiles/food-labeling.yaml to fedreg.yaml
+#      and remove fedreg.yaml from .gitignore), or point PROFILE at one below.
+#   2. Settings -> Secrets and variables -> Actions:
+#        secrets:   ANTHROPIC_API_KEY, and for email SMTP_HOST, SMTP_USERNAME,
+#                   SMTP_PASSWORD, FEDREG_EMAIL_TO
+#        variables: FEDREG_ENABLED = true
+#   3. Adjust the cron below (it is UTC).
+#
+# The digest is stateless (eCFR history is diffed directly), so no database has
+# to survive between runs. The AI cache is carried over only to save money.
+
+name: Weekly digest
+
+on:
+  schedule:
+    - cron: "17 7 * * 1" # Mondays 07:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PROFILE: ${{ vars.FEDREG_PROFILE || 'fedreg.yaml' }}
+
+jobs:
+  digest:
+    if: vars.FEDREG_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install .
+
+      - name: Restore AI cache
+        uses: actions/cache@v4
+        with:
+          path: .fedreg-digest
+          key: fedreg-digest-cache-${{ github.run_id }}
+          restore-keys: fedreg-digest-cache-
+
+      - name: Build and send the digest
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          FEDREG_EMAIL_TO: ${{ secrets.FEDREG_EMAIL_TO }}
+        # Exits non-zero if the digest is incomplete or the email fails, so a
+        # broken key or SMTP password shows up as a red run, not silence.
+        run: fedreg-digest run -p "$PROFILE" --out digests
+
+      - name: Keep the digest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ github.run_number }}
+          path: digests/
+          retention-days: 90

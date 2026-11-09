@@ -1,0 +1,47 @@
+# Example: a small food brand tracking FDA labeling rules.
+# Copy to fedreg.yaml and edit. Every option: docs/configuration.md.
+
+name: Food labeling watch
+
+# Claude reads this to judge relevance and to write summaries. Say who you
+# are and what you care about; the more concrete, the better the filtering.
+topic: >
+  A small US packaged-food company that designs its own labels. We care about
+  FDA rules and guidance on nutrition labeling, nutrient content and health
+  claims ("healthy", "low sodium"), front-of-package labeling, allergen
+  declarations and serving sizes. Recalls of individual products and
+  advisory-committee logistics are not interesting to us.
+
+keywords:
+  - nutrition facts
+  - nutrition labeling
+  - food labeling
+  - front-of-package
+  - nutrient content claim
+  - health claim
+  - healthy
+  - serving size
+  - allergen
+  - sodium content
+  - added sugars
+
+federal_register:
+  agencies: [food-and-drug-administration]
+  document_types: [RULE, PRORULE, NOTICE]
+
+# Amendments to these parts are reported with a before/after diff, and any
+# Federal Register rule that touches them is included automatically.
+ecfr:
+  title: 21
+  parts: ["101"]   # Food labeling
+
+ai:
+  enabled: true
+  model: claude-haiku-5-5
+
+digest:
+  lookback_days: 7
+  output_dir: digests
+
+email:
+  enabled: false

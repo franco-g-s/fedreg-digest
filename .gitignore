@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+.env
+.env.*
+!.env.example
+
+# Your own profile and output stay local unless you choose to commit them.
+fedreg.yaml
+/digests/
+.fedreg-digest/
+.DS_Store
